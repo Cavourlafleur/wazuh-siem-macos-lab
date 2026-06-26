@@ -1,0 +1,273 @@
+
+# Wazuh SIEM/XDR Home Lab Project Summary
+
+## Project Overview
+
+Deployed a fully functional Wazuh SIEM/XDR home lab environment using an Ubuntu virtual machine as the central server and a macOS endpoint as the monitored agent. The project demonstrates end-to-end security monitoring capabilities, including installation, configuration, troubleshooting, and alert validation through File Integrity Monitoring (FIM).
+
+---
+
+## Technical Implementation
+
+### 1. Wazuh Server Installation (Ubuntu 24.04 LTS)
+
+**System Update:**
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+**Download and Run Wazuh Installer:**
+
+```bash
+curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
+sudo bash wazuh-install.sh -a
+```
+
+The `-a` flag automates the installation, setting up all required components: Wazuh Manager, Filebeat, Indexer, and Wazuh Dashboard.
+
+For Ubuntu 24.04 (newer than officially supported versions), the OS check was bypassed using `-i`:
+
+```bash
+sudo bash wazuh-install.sh -a -i
+```
+
+**Successful Installation Output:**
+
+```text
+Wazuh indexer installation finished.
+wazuh-indexer service started.
+Wazuh manager installation finished.
+wazuh-manager service started.
+Filebeat installation finished.
+filebeat service started.
+Wazuh dashboard installation finished.
+wazuh-dashboard service started.
+Installation finished.
+```
+
+**Retrieve Admin Password:**
+
+```bash
+sudo tar -O -xvf wazuh-install-files.tar wazuh-install-files/wazuh-passwords.txt
+```
+
+---
+
+### 2. Disk Space Troubleshooting & LVM Expansion
+
+**Issue:** Dashboard installation failed with `No space left on device`.
+
+**Commands Used to Diagnose:**
+
+```bash
+df -h
+lsblk
+sudo pvs
+sudo vgs
+sudo lvs
+```
+
+**LVM Expansion Command:**
+
+```bash
+sudo lvextend --resizefs -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+```
+
+**Alternative LVM Expansion Command:**
+
+```bash
+sudo lvextend -l +100%FREE -r /dev/mapper/ubuntu--vg-ubuntu--lv
+```
+
+**Verification:**
+
+```bash
+df -h /
+```
+
+**Result:**
+
+```text
+/dev/mapper/ubuntu--vg-ubuntu--lv   47G   12G   33G  26% /
+```
+
+---
+
+### 3. Wazuh Dashboard Access
+
+**Dashboard URL:**
+
+```text
+https://<WAZUH_DASHBOARD_IP_ADDRESS>
+```
+
+**Default Login Credentials:**
+
+```text
+Username: admin
+Password: [generated during installation, retrieved from wazuh-install-files.tar]
+```
+
+---
+
+### 4. macOS Agent Deployment
+
+**Download macOS Agent Package:**
+
+```bash
+curl -sO https://packages.wazuh.com/4.x/macos/wazuh-agent-4.7.0-1.pkg
+```
+
+**Set Wazuh Manager IP and Install:**
+
+```bash
+sudo launchctl setenv WAZUH_MANAGER "192.168.190.138" && sudo installer -pkg wazuh-agent-4.7.0-1.pkg -target /
+```
+
+**Alternative Installation Method:**
+
+```bash
+echo "WAZUH_MANAGER='192.168.190.138'" > /tmp/wazuh_envs && sudo installer -pkg wazuh-agent-4.7.0-1.pkg -target /
+```
+
+**Start the Wazuh Agent on macOS:**
+
+```bash
+sudo /Library/Ossec/bin/wazuh-control start
+```
+
+**Check Agent Status on macOS:**
+
+```bash
+sudo launchctl list | grep wazuh-agent
+```
+
+**Verify Agent Communication:**
+
+```bash
+sudo /Library/Ossec/bin/agent_control -lc
+```
+
+**Dashboard Verification:**
+
+```text
+Agent: Lafleur.local
+Status: Active
+```
+
+---
+
+### 5. File Integrity Monitoring (FIM) Configuration
+
+**Configuration File Path (macOS):**
+
+```text
+/Library/Ossec/etc/ossec.conf
+```
+
+**Working `syscheck` Block:**
+
+```xml
+<syscheck>
+  <disabled>no</disabled>
+  <frequency>60</frequency>
+  <scan_on_start>yes</scan_on_start>
+  <alert_new_files>yes</alert_new_files>
+  <directories check_all="yes" report_changes="yes">/Users/lafleur/wazuh-fim-test</directories>
+  <skip_nfs>yes</skip_nfs>
+  <skip_dev>yes</skip_dev>
+  <skip_proc>yes</skip_proc>
+  <skip_sys>yes</skip_sys>
+</syscheck>
+```
+
+**Restart Agent After Configuration Change:**
+
+```bash
+sudo /Library/Ossec/bin/wazuh-control restart
+```
+
+---
+
+### 6. FIM Detection Test
+
+**Create Test Directory:**
+
+```bash
+mkdir -p /Users/lafleur/wazuh-fim-test
+```
+
+**Create Test File:**
+
+```bash
+echo "hello wazuh" > /Users/lafleur/wazuh-fim-test/demo.txt
+```
+
+**Modify Test File:**
+
+```bash
+echo "changed line" >> /Users/lafleur/wazuh-fim-test/demo.txt
+```
+
+**Delete Test File:**
+
+```bash
+rm /Users/lafleur/wazuh-fim-test/demo.txt
+```
+
+---
+
+### 7. Confirmed Alerts in Dashboard
+
+| Event         | Agent           | Path                                       | Rule Description            | Rule Level | Rule ID |
+| ------------- | --------------- | ------------------------------------------ | --------------------------- | :--------: | :-----: |
+| File added    | `Lafleur.local` | `/Users/lafleur/wazuh-fim-test/demo.txt`   | File added to the system.   |     5      |   554   |
+| File modified | `Lafleur.local` | `/Users/lafleur/wazuh-fim-test/demo.txt`   | Integrity checksum changed. |     7      |   550   |
+| File deleted  | `Lafleur.local` | `/Users/lafleur/wazuh-fim-test/demo.txt`   | File deleted.               |     7      |   553   |
+
+**Detection Pipeline Confirmed:**
+
+```text
+Mac file activity
+→ Wazuh agent detects change
+→ Wazuh manager receives event
+→ Wazuh rules trigger alert
+→ Wazuh dashboard displays event
+```
+
+---
+
+## Key Skills Demonstrated
+
+- **SIEM Deployment:** Wazuh installation, configuration, and dashboard management
+- **Endpoint Monitoring:** Onboarding and managing macOS agents with Wazuh
+- **File Integrity Monitoring:** Configuring and validating FIM alerts for file changes
+- **Linux Administration:** LVM management, disk expansion, and system troubleshooting
+- **Detection Engineering:** Creating controlled test events and mapping them to security rules
+- **Incident Response Fundamentals:** Interpreting security alerts and understanding detection pipelines
+
+---
+
+## Technologies Used
+
+- **Operating Systems:** Ubuntu 24.04 LTS, macOS
+- **SIEM Platform:** Wazuh (manager, indexer, dashboard, Filebeat)
+- **Monitoring:** File Integrity Monitoring (syscheck), endpoint agent telemetry
+- **Tools:** LVM, Linux command-line utilities, XML configuration management
+
+---
+
+## Portfolio Value
+
+This project demonstrates practical, hands-on experience with security monitoring, detection engineering, and incident response workflows. It reflects a strong understanding of SIEM architecture, endpoint security, and the ability to troubleshoot and resolve technical challenges independently.
+
+---
+
+## Project Outcomes
+
+- Fully functional Wazuh SIEM/XDR lab with real-time endpoint telemetry
+- Successful detection and alerting for file creation, modification, and deletion events
+- Demonstrated ability to troubleshoot complex installation and configuration issues
+- Hands-on experience with security monitoring tools and techniques used in professional SOC environments
+```
