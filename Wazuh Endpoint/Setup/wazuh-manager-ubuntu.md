@@ -71,3 +71,6 @@ These are useful Linux commands for checking system and service status:
 
 ```bash
 hostname -I
+sudo systemctl status wazuh-manager
+sudo systemctl status wazuh-indexer
+sudo systemctl status wazuh-dashboard
