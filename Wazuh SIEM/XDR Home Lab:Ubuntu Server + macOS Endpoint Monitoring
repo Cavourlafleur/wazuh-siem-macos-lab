@@ -5,7 +5,7 @@
 
 Deployed a fully functional Wazuh SIEM/XDR home lab environment using an Ubuntu virtual machine as the central server and a macOS endpoint as the monitored agent. The project demonstrates end-to-end security monitoring capabilities, including installation, configuration, troubleshooting, and alert validation through File Integrity Monitoring (FIM).
 
----
+--
 
 ## Technical Implementation
 
