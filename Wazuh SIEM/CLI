@@ -1,0 +1,209 @@
+# Linux, macOS, and Wazuh SOC Analyst Command Notes
+
+This cheat sheet explains useful Linux, macOS, and Wazuh commands for SOC analyst work. The goal is not only to memorize commands, but to understand what each command means, what each option/flag does, and why a security analyst would use it during endpoint monitoring, vulnerability management, log review, and troubleshooting.
+
+## Basic File and Folder Commands
+
+`pwd` means “print working directory.” It shows the folder location I am currently in. A SOC analyst uses this to know exactly where they are in the filesystem before running commands.
+
+`ls` means “list.” It shows files and folders in the current directory. A SOC analyst uses this to quickly see what files exist in a folder.
+
+`ls -l` means “list in long format.” The `-l` flag shows detailed information such as file permissions, owner, group, size, date modified, and file name. A SOC analyst uses this to review file ownership and permissions.
+
+`ls -a` means “list all files.” The `-a` flag shows hidden files too. Hidden files usually start with a dot, like `.bashrc`, `.zshrc`, or `.git`. A SOC analyst uses this because suspicious files may be hidden.
+
+`ls -la` combines `-l` and `-a`. It means “show all files, including hidden files, in long detailed format.” This is one of the most useful commands for investigations because it shows file details and hidden files together.
+
+`cd foldername` means “change directory.” It moves me into a folder. A SOC analyst uses this to navigate through folders during an investigation.
+
+`cd ..` means “go back one directory.” The `..` represents the parent folder. A SOC analyst uses this to move backward in the folder structure.
+
+`cd ~` means “go to my home directory.” The `~` symbol represents the current user’s home folder, such as `/Users/myname` on macOS or `/home/myname` on Linux.
+
+`mkdir foldername` means “make directory.” It creates a new folder. A SOC analyst may use this to create lab folders, evidence folders, or investigation folders.
+
+`mkdir -p folder1/folder2` means “create this full folder path, including parent folders if they do not already exist.” The `-p` flag means “parents.” Example: `mkdir -p ~/wazuh-fim-lab` creates the `wazuh-fim-lab` folder inside the home directory.
+
+`rm file.txt` means “remove file.” It deletes a file. A SOC analyst must be careful with this command because it does not send files to the trash.
+
+`rm -r foldername` means “remove a folder and everything inside it.” The `-r` flag means “recursive.” Recursive means it goes through the folder and deletes all files and subfolders inside. This is powerful and dangerous.
+
+`cp file1.txt file2.txt` means “copy file1.txt and create a copy named file2.txt.” A SOC analyst uses this to back up evidence before editing or testing.
+
+`mv oldname.txt newname.txt` means “move or rename.” It can rename a file or move it to another folder. A SOC analyst uses this to organize investigation files.
+
+## File Viewing and Log Reading Commands
+
+`cat file.txt` displays the full contents of a file in the terminal. A SOC analyst uses this to quickly read small log files or configuration files.
+
+`head file.txt` shows the first 10 lines of a file. A SOC analyst uses this to quickly inspect the beginning of a file.
+
+`tail file.txt` shows the last 10 lines of a file. A SOC analyst uses this because logs usually add new events at the bottom.
+
+`tail -f logfile.log` means “show the end of the file and keep following new lines live.” The `-f` flag means “follow.” This is very useful for SOC analysts because it lets them watch logs in real time.
+
+`less file.txt` opens a file in a scrollable viewer. A SOC analyst uses this for large logs because `cat` may print too much text at once.
+
+`grep word file.txt` searches for a word inside a file. Example: `grep error logfile.log` searches for the word `error` in `logfile.log`.
+
+`grep -i error logfile.log` searches for the word `error` and ignores uppercase/lowercase. The `-i` flag means “ignore case.” It finds `error`, `ERROR`, `Error`, and other case variations.
+
+`grep -c failed auth.log` counts how many times the word `failed` appears in the file. The `-c` flag means “count.” A SOC analyst uses this to count failed login attempts.
+
+`grep -R password .` searches recursively through the current folder and subfolders for the word `password`. The `-R` flag means “recursive.” The `.` means “current directory.” A SOC analyst may use this to find exposed secrets in files.
+
+## User and System Information Commands
+
+`whoami` shows the current logged-in username. A SOC analyst uses this to confirm which account is being used.
+
+`id` shows the user ID, group ID, and groups for the current user. A SOC analyst uses this to understand user permissions.
+
+`who` shows users currently logged into the system. A SOC analyst uses this to identify active sessions.
+
+`hostname` shows the computer name. A SOC analyst uses this to identify the endpoint.
+
+`hostname -I` shows the IP address on Linux. The `-I` flag means show the system’s IP addresses. This is useful when connecting agents to a manager or identifying host network information.
+
+`uname -a` shows detailed operating system information. The `-a` flag means “all.” A SOC analyst uses this for system inventory and investigation.
+
+`uname -m` shows the machine architecture, such as `arm64` or `x86_64`. A SOC analyst uses this to know which software package is compatible with the system.
+
+## Network Investigation Commands
+
+`ping google.com` tests if the system can reach another host. A SOC analyst uses this to check network connectivity.
+
+`nslookup google.com` checks DNS resolution for a domain. A SOC analyst uses this to investigate domains and confirm what IP address a domain resolves to.
+
+`dig google.com` is another DNS lookup tool that gives more detailed DNS information. A SOC analyst uses this for deeper domain investigation.
+
+`netstat -an` shows active network connections and listening ports. The `-a` flag means “all.” The `-n` flag means show numeric addresses instead of names. A SOC analyst uses this to look for suspicious connections.
+
+`ss -tulpn` shows listening ports and processes on Linux. The `-t` means TCP, `-u` means UDP, `-l` means listening, `-p` means process, and `-n` means numeric output. A SOC analyst uses this to identify services listening on the system.
+
+`sudo lsof -i -P -n` shows open network connections and the processes using them. `sudo` runs the command as administrator, `lsof` means list open files, `-i` shows network files/connections, `-P` prevents port names from being converted, and `-n` prevents DNS name lookup. A SOC analyst uses this to see which process is talking on the network.
+
+## Process Investigation Commands
+
+`ps aux` shows running processes. `ps` means process status. `a` shows processes from all users, `u` shows user-oriented output, and `x` includes processes not attached to a terminal. A SOC analyst uses this to find suspicious running programs.
+
+`ps aux | grep chrome` searches running processes for Chrome. The `|` symbol is a pipe, which sends the output of one command into another command. `grep chrome` searches that output for the word `chrome`.
+
+`top` shows running processes live and updates continuously. A SOC analyst uses this to check CPU and memory usage.
+
+`htop` is a more user-friendly version of `top`, if installed. A SOC analyst uses this to view processes more easily.
+
+`kill PID` stops a process by process ID. A SOC analyst uses this carefully if a process is malicious or stuck.
+
+`pkill processname` stops a process by name. Example: `pkill chrome` attempts to stop Chrome processes. A SOC analyst must use this carefully.
+
+## Disk and Storage Commands
+
+`df -h` shows disk free space. `df` means disk free. The `-h` flag means “human readable,” so sizes show as GB or MB instead of huge numbers.
+
+`du -sh foldername` shows the size of a folder. `du` means disk usage. `-s` means summary, and `-h` means human readable.
+
+`du -ah | sort -rh | head` finds large files and folders. `du -ah` shows all file sizes in human-readable form, `sort -rh` sorts them from largest to smallest, and `head` shows the top results. A SOC analyst may use this to find large suspicious files.
+
+## File Permission Commands
+
+`ls -l` shows file permissions. Example permissions look like `-rw-r--r--`. The first part shows whether it is a file or directory, and the next parts show permissions for owner, group, and others.
+
+`chmod 755 file.sh` changes file permissions. `chmod` means change mode. `755` means the owner can read, write, and execute; the group can read and execute; others can read and execute.
+
+`chmod 600 secrets.txt` makes a file private to the owner. `600` means the owner can read and write, but group and others have no access. This is useful for sensitive files.
+
+`sudo chown user file.txt` changes the owner of a file. `chown` means change owner. A SOC analyst may use this when fixing ownership issues.
+
+## macOS Useful Commands
+
+`softwareupdate -l` checks for available macOS software updates. The `-l` flag means list. A SOC analyst uses this for vulnerability remediation.
+
+`sudo softwareupdate -ia` installs available macOS updates. `-i` means install, and `-a` means all. A SOC analyst uses this to patch the system.
+
+`launchctl list` shows running macOS services and launch agents. A SOC analyst uses this to review background services.
+
+`system_profiler SPApplicationsDataType` lists installed applications on macOS. A SOC analyst uses this for software inventory and vulnerability management.
+
+`log stream` shows live macOS logs. A SOC analyst uses this to monitor activity in real time.
+
+`log show --last 1h` shows logs from the last one hour. `--last 1h` means only show recent logs from the past hour. A SOC analyst uses this during incident investigation.
+
+## Python and Package Commands
+
+`python3 --version` shows the installed Python version. A SOC analyst uses this for software inventory.
+
+`pip3 list` shows installed Python packages. A SOC analyst uses this to identify vulnerable packages.
+
+`pip3 show setuptools` shows details about the `setuptools` Python package, including version and location. This is useful when Wazuh reports a vulnerable Python package.
+
+`pip3 install --upgrade setuptools` updates the `setuptools` package. `install --upgrade` means install the newest available version. A SOC analyst uses this for vulnerability remediation.
+
+## Wazuh Agent Commands on macOS
+
+`sudo /Library/Ossec/bin/wazuh-control status` checks the Wazuh agent status on macOS. `sudo` runs as administrator, `/Library/Ossec/bin/wazuh-control` is the Wazuh control program, and `status` asks if the agent is running. A SOC analyst uses this to confirm the endpoint is being monitored.
+
+`sudo /Library/Ossec/bin/wazuh-control restart` restarts the Wazuh agent. A SOC analyst uses this after changing the Wazuh agent configuration.
+
+`sudo /Library/Ossec/bin/wazuh-control stop` stops the Wazuh agent. A SOC analyst may use this for troubleshooting but should be careful because stopping the agent stops monitoring.
+
+`sudo /Library/Ossec/bin/wazuh-control start` starts the Wazuh agent. A SOC analyst uses this to restore endpoint monitoring.
+
+`tail -f /Library/Ossec/logs/ossec.log` watches the Wazuh agent log live on macOS. `tail -f` means follow the log in real time. A SOC analyst uses this to troubleshoot agent connection or configuration issues.
+
+`sudo nano /Library/Ossec/etc/ossec.conf` opens the Wazuh agent configuration file on macOS. `nano` is a terminal text editor. A SOC analyst uses this to configure monitoring, such as File Integrity Monitoring.
+
+## Wazuh Manager Commands on Ubuntu/Linux
+
+`sudo systemctl status wazuh-manager` checks if the Wazuh Manager service is running. `systemctl` controls Linux services, `status` checks service health, and `wazuh-manager` is the service name.
+
+`sudo systemctl restart wazuh-manager` restarts the Wazuh Manager service. A SOC analyst uses this when troubleshooting manager issues.
+
+`sudo systemctl status wazuh-dashboard` checks if the Wazuh Dashboard service is running. A SOC analyst uses this when the dashboard is not loading.
+
+`sudo systemctl restart wazuh-dashboard` restarts the Wazuh Dashboard service. A SOC analyst uses this to fix dashboard issues.
+
+`sudo systemctl status wazuh-indexer` checks if the Wazuh Indexer service is running. The indexer stores and indexes security data so it can be searched.
+
+`sudo systemctl restart wazuh-indexer` restarts the Wazuh Indexer. A SOC analyst uses this carefully when troubleshooting search or indexing problems.
+
+## Wazuh File Integrity Monitoring Lab Commands
+
+`mkdir -p ~/wazuh-fim-lab` creates the lab folder in the home directory. `mkdir` creates a folder, `-p` creates parent folders if needed, and `~` means home directory.
+
+`echo "This is my first Wazuh FIM test file" > ~/wazuh-fim-lab/test-file.txt` creates a test file. `echo` prints text, `>` writes the text into a file, and the path tells the system where to save the file. If the file already exists, `>` overwrites it.
+
+`ls -la ~/wazuh-fim-lab` lists all files in the lab folder in long detailed format, including hidden files. This verifies the test file was created.
+
+`whoami` shows the current macOS username. This is needed because Wazuh needs the full path like `/Users/myusername/wazuh-fim-lab`.
+
+`sudo nano /Library/Ossec/etc/ossec.conf` opens the Wazuh agent configuration file for editing.
+
+`<directories realtime="yes" check_all="yes" report_changes="yes">/Users/YOUR_USERNAME/wazuh-fim-lab</directories>` is the Wazuh FIM configuration line. `directories` tells Wazuh which folder to monitor. `realtime="yes"` means monitor changes as they happen. `check_all="yes"` means check file attributes and integrity information. `report_changes="yes"` means report file content changes when supported. The folder path tells Wazuh exactly what directory to watch.
+
+`sudo /Library/Ossec/bin/wazuh-control restart` restarts the Wazuh agent so the new FIM configuration takes effect.
+
+`sudo /Library/Ossec/bin/wazuh-control status` confirms the Wazuh agent is running after the restart.
+
+`echo "New sensitive document" > ~/wazuh-fim-lab/sensitive-note.txt` creates a new file inside the monitored folder. Wazuh should detect this as a file creation event.
+
+`echo "Unauthorized change test" >> ~/wazuh-fim-lab/sensitive-note.txt` adds text to the existing file. The `>>` symbol appends text instead of overwriting the file. Wazuh should detect this as a file modification event.
+
+`rm ~/wazuh-fim-lab/sensitive-note.txt` deletes the test file. Wazuh should detect this as a file deletion event.
+
+## Git Commands for Saving Lab Notes
+
+`git status` shows what files changed in the Git repository. A SOC analyst or security student uses this before committing documentation.
+
+`git add endpoint-security/endpoint-monitoring.md` stages the file so Git knows it should be included in the next commit.
+
+`git commit -m "Add endpoint monitoring lab with Wazuh FIM"` creates a saved version of the work. The `-m` flag means message, and the message explains what changed.
+
+`git push` uploads the committed changes to GitLab.
+
+## How to Read Any Command Like a SOC Analyst
+
+When I see a command, I should break it into parts. First, identify the main command, such as `ls`, `grep`, `tail`, or `systemctl`. Second, identify the flags, such as `-l`, `-a`, `-f`, `-i`, or `-h`. Third, identify the target, such as a file, folder, service, or process. Fourth, understand the output. Fifth, ask why a SOC analyst would use it. For example, `grep -i failed /var/log/auth.log` means: `grep` searches text, `-i` ignores uppercase/lowercase, `failed` is the word being searched, and `/var/log/auth.log` is the log file being searched. A SOC analyst uses this to find failed login attempts.
+
+## SOC Analyst Alert Questions
+
+When reviewing a Wazuh alert, I should ask: What happened? When did it happen? Which endpoint was involved? Which user was involved? Is the activity expected or suspicious? What is the risk? What remediation is recommended? These questions help me think like a SOC analyst instead of only looking at alerts.
