@@ -177,25 +177,3 @@ High severity vulnerabilities were grouped by affected software:
 
 ---
 
-## What I Learned
-
-In this lab, I learned that HIPAA is not only about having security tools.
-
-HIPAA security work involves:
-
-- Monitoring systems
-- Reviewing logs
-- Identifying vulnerabilities
-- Assessing risk
-- Documenting remediation
-- Keeping evidence
-
-Wazuh helped me understand how technical security monitoring can support compliance readiness.
-
-## Interview Explanation
-
-In my Wazuh lab, I mapped endpoint monitoring, file integrity monitoring, vulnerability detection, and risk documentation to HIPAA Security Rule concepts.
-
-I did not use real patient data. Instead, I simulated how a healthcare organization could use endpoint monitoring and vulnerability management to support HIPAA security safeguards.
-
-This helped me understand how security tools can provide evidence for audit controls, integrity monitoring, workstation security, and risk analysis.
