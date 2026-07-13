@@ -48,4 +48,3 @@ That translation is the core skill this lab demonstrates.
 | Wazuh Dashboard | Review alerts and evidence |
 | GitHub | Store documentation |
 
-### Data Flow
